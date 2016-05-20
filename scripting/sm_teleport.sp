@@ -39,59 +39,107 @@ public void OnAdminMenuReady(Handle topMenu) {
 	if (g_hAdminMenu != topMenu) {
 		g_hAdminMenu = topMenu;
 		
-		TopMenuObject Playercommands = FindTopMenuCategory(g_hAdminMenu, ADMINMENU_PLAYERCOMMANDS);
+		TopMenuObject hPlayerCommandsCategory = FindTopMenuCategory(g_hAdminMenu, ADMINMENU_PLAYERCOMMANDS);
 		
-		if (Playercommands != INVALID_TOPMENUOBJECT) {
-			AddToTopMenu(g_hAdminMenu, "sm_bring", TopMenuObject_Item, Adminmenu_Bring, Playercommands, "sm_bring", ADMFLAG_SLAY);
-			AddToTopMenu(g_hAdminMenu, "sm_goto", TopMenuObject_Item, Adminmenu_Goto, Playercommands, "sm_goto", ADMFLAG_SLAY);
-			AddToTopMenu(g_hAdminMenu, "sm_send", TopMenuObject_Item, Adminmenu_Send, Playercommands, "sm_send", ADMFLAG_SLAY);
+		if (hPlayerCommandsCategory != INVALID_TOPMENUOBJECT) {
+			AddToTopMenu(g_hAdminMenu, "sm_bring", TopMenuObject_Item, AdminMenu_Bring, hPlayerCommandsCategory, "sm_bring", ADMFLAG_SLAY);
+			AddToTopMenu(g_hAdminMenu, "sm_goto", TopMenuObject_Item, AdminMenu_GoTo, hPlayerCommandsCategory, "sm_goto", ADMFLAG_SLAY);
+			AddToTopMenu(g_hAdminMenu, "sm_send", TopMenuObject_Item, AdminMenu_Send, hPlayerCommandsCategory, "sm_send", ADMFLAG_SLAY);
+			AddToTopMenu(g_hAdminMenu, "sm_place", TopMenuObject_Item, AdminMenu_Place, hPlayerCommandsCategory, "sm_place", ADMFLAG_SLAY);
 		}
 	}
 }
 
-public void Adminmenu_Bring(Handle topMenu, TopMenuAction Selection, TopMenuObject Object, int Parameter, char[] Buffer, int Maxlength) {
-	switch(Selection) {
+public void AdminMenu_Bring(Handle topMenu, TopMenuAction action, TopMenuObject obj, int client, char[] buffer, int maxlength) {
+	switch(action) {
 		case(TopMenuAction_DisplayOption): {
-			Format(Buffer, Maxlength, "Bring player");
+			Format(buffer, maxlength, "Bring player");
 		}
 		case(TopMenuAction_SelectOption): {
-			Displaymenu_Bring(Parameter);
+			Displaymenu_Bring(client);
 		}
 	}
 }
 
-public void Adminmenu_Goto(Handle topMenu, TopMenuAction Selection, TopMenuObject Object, int Parameter, char[] Buffer, int Maxlength) {
-	switch(Selection) {
+public void AdminMenu_GoTo(Handle topMenu, TopMenuAction action, TopMenuObject obj, int client, char[] buffer, int maxlength) {
+	switch(action) {
 		case(TopMenuAction_DisplayOption): {
-			Format(Buffer, Maxlength, "Goto player");
+			Format(buffer, maxlength, "Go to player");
 		}
 		case(TopMenuAction_SelectOption): {
-			Displaymenu_Goto(Parameter);
+			Displaymenu_Goto(client);
 		}
 	}
 }
 
-public void Adminmenu_Send(Handle topMenu, TopMenuAction Selection, TopMenuObject Object, int Parameter, char[] Buffer, int Maxlength) {
-	switch(Selection) {
+public void AdminMenu_Send(Handle topMenu, TopMenuAction action, TopMenuObject obj, int client, char[] buffer, int maxlength) {
+	switch(action) {
 		case(TopMenuAction_DisplayOption): {
-			Format(Buffer, Maxlength, "Send player");
+			Format(buffer, maxlength, "Send player");
 		}
 		case(TopMenuAction_SelectOption): {
-			Displaymenu_Send(Parameter);
+			Displaymenu_Send(client);
+		}
+	}
+}
+
+public void AdminMenu_Place(Handle topMenu, TopMenuAction action, TopMenuObject obj, int client, char[] buffer, int maxlength) {
+	switch(action) {
+		case(TopMenuAction_DisplayOption): {
+			Format(buffer, maxlength, "Place player");
+		}
+		case(TopMenuAction_SelectOption): {
+			Displaymenu_Place(client);
 		}
 	}
 }
 
 public void Displaymenu_Bring(int client) {
 	Handle hMenu = CreateMenu(Commandmenu_Bring);
-	SetMenuTitle(hMenu, "Bring player:");
+	SetMenuTitle(hMenu, "Bring player");
 	SetMenuExitBackButton(hMenu, true);
 	
 	for (int player = 1; player <= MaxClients; ++player) {
 		if (client != player && IsClientInGame(player) && IsClientConnected(player) && IsPlayerAlive(player)) {
+			char buffer[128], name[128], userID[16];
+			IntToString(GetClientUserId(player), userID, sizeof(userID));
+			GetClientName(player, name, sizeof(name));
+			Format(buffer, sizeof(buffer), "%s (%s)", name, userID);
+			AddMenuItem(hMenu, userID, buffer);
+		}
+	}
+	
+	DisplayMenu(hMenu, client, MENU_TIME_FOREVER);
+}
+
+public void Displaymenu_Goto(int client) {
+	Handle hMenu = CreateMenu(Commandmenu_Goto);	
+	SetMenuTitle(hMenu, "Goto player:");
+	SetMenuExitBackButton(hMenu, true);
+	
+	for (int player = 1; player <= MaxClients; ++player) {
+		if (client != player && IsClientInGame(player) && IsClientConnected(player) && IsPlayerAlive(player)) {
+			char buffer[128], name[128], userID[16];
+			IntToString(GetClientUserId(player), userID, sizeof(userID));
+			GetClientName(player, name, sizeof(name));
+			Format(buffer, sizeof(buffer), "%s (%s)", name, userID);
+			AddMenuItem(hMenu, userID, buffer);
+		}
+	}
+	
+	DisplayMenu(hMenu, client, MENU_TIME_FOREVER);
+}
+
+public void Displaymenu_Send(int client) {
+	Handle hMenu = CreateMenu(Commandmenu_Send);
+	SetMenuTitle(hMenu, "Send player:");
+	SetMenuExitBackButton(hMenu, true);
+	
+	for (int Player = 1; Player <= MaxClients; Player++) {
+		if (client != Player && IsClientInGame(Player) && IsClientConnected(Player) && IsPlayerAlive(Player)) {
 			char Buffer[128], Name[128], UserID[16];
-			IntToString(GetClientUserId(player), UserID, sizeof(UserID));
-			GetClientName(player, Name, sizeof(Name));
+			IntToString(GetClientUserId(Player), UserID, sizeof(UserID));
+			GetClientName(Player, Name, sizeof(Name));
 			Format(Buffer, sizeof(Buffer), "%s (%s)", Name, UserID);
 			AddMenuItem(hMenu, UserID, Buffer);
 		}
@@ -100,45 +148,9 @@ public void Displaymenu_Bring(int client) {
 	DisplayMenu(hMenu, client, MENU_TIME_FOREVER);
 }
 
-public void Displaymenu_Goto(int Client) {
-	Handle hMenu = CreateMenu(Commandmenu_Goto);	
-	SetMenuTitle(hMenu, "Goto player:");
-	SetMenuExitBackButton(hMenu, true);
-	
-	for (int Player = 1; Player <= MaxClients; Player++) {
-		if (Client != Player && IsClientInGame(Player) && IsClientConnected(Player) && IsPlayerAlive(Player)) {
-			char Buffer[128], Name[128], UserID[16];
-			IntToString(GetClientUserId(Player), UserID, sizeof(UserID));
-			GetClientName(Player, Name, sizeof(Name));
-			Format(Buffer, sizeof(Buffer), "%s (%s)", Name, UserID);
-			AddMenuItem(hMenu, UserID, Buffer);
-		}
-	}
-	
-	DisplayMenu(hMenu, Client, MENU_TIME_FOREVER);
-}
-
-public void Displaymenu_Send(int Client) {
-	Handle hMenu = CreateMenu(Commandmenu_Send);
-	SetMenuTitle(hMenu, "Send player:");
-	SetMenuExitBackButton(hMenu, true);
-	
-	for (int Player = 1; Player <= MaxClients; Player++) {
-		if (Client != Player && IsClientInGame(Player) && IsClientConnected(Player) && IsPlayerAlive(Player)) {
-			char Buffer[128], Name[128], UserID[16];
-			IntToString(GetClientUserId(Player), UserID, sizeof(UserID));
-			GetClientName(Player, Name, sizeof(Name));
-			Format(Buffer, sizeof(Buffer), "%s (%s)", Name, UserID);
-			AddMenuItem(hMenu, UserID, Buffer);
-		}
-	}
-	
-	DisplayMenu(hMenu, Client, MENU_TIME_FOREVER);
-}
-
 public void Displaymenu_SendTo(int Client) {
 	Handle hMenu = CreateMenu(Commandmenu_SendTo);	
-	SetMenuTitle(hMenu, "Send player: %N", g_aiSendTargets[Client]);
+	SetMenuTitle(hMenu, "Send %N to:", g_aiSendTargets[Client]);
 	SetMenuExitBackButton(hMenu, true);
 
 	for (int Player = 1; Player <= MaxClients; Player++) {
@@ -152,6 +164,24 @@ public void Displaymenu_SendTo(int Client) {
 	}
 	
 	DisplayMenu(hMenu, Client, MENU_TIME_FOREVER);
+}
+
+public void Displaymenu_Place(int client) {
+	Handle hMenu = CreateMenu(Commandmenu_Place);
+	SetMenuTitle(hMenu, "Place a player at your aim:");
+	SetMenuExitBackButton(hMenu, true);
+	
+	for (int player = 1; player <= MaxClients; ++player) {
+		if (client != player && IsClientInGame(player) && IsClientConnected(player) && IsPlayerAlive(player)) {
+			char buffer[128], name[128], userID[16];
+			IntToString(GetClientUserId(player), userID, sizeof(userID));
+			GetClientName(player, name, sizeof(name));
+			Format(buffer, sizeof(buffer), "%s (%s)", name, userID);
+			AddMenuItem(hMenu, userID, buffer);
+		}
+	}
+	
+	DisplayMenu(hMenu, client, MENU_TIME_FOREVER);
 }
 
 public int Commandmenu_Bring(Menu hMenu, MenuAction Selection, int Parameter1, int Parameter2) {
@@ -306,6 +336,34 @@ public Action Command_Bring(int Client, int ArgC) {
 	}
 	
 	return Plugin_Handled;
+}
+
+public int Commandmenu_Place(Menu hMenu, MenuAction Selection, int Parameter1, int Parameter2) {
+	switch(Selection) {
+		case(MenuAction_End): {
+			CloseHandle(hMenu);
+		}
+		case(MenuAction_Cancel): {
+			DisplayTopMenu(g_hAdminMenu, Parameter1, TopMenuPosition_LastCategory);
+		}
+		case(MenuAction_Select): {
+			char Info[64];
+			GetMenuItem(hMenu, Parameter2, Info, sizeof(Info));
+			int Target = GetClientOfUserId(StringToInt(Info));
+			
+			if (Target <= 0) {
+				ReplyToCommand(Parameter1, "[SM] Unable to find target.");
+			} else if (!CanUserTarget(Parameter1, Target)) {
+				ReplyToCommand(Parameter1, "[SM] Unable to target.");
+			} else if (!IsPlayerAlive(Target)) {
+				ReplyToCommand(Parameter1, "[SM] Player no longer alive.");
+			} else {
+				PerformTeleportToAim(Parameter1, Target);
+				LogAction(Parameter1, -1, "\"%L\" teleported \"%L\" to his aim.", Parameter1, Target);
+				ShowActivity(Parameter1, "teleported %N to his aim.", Target);
+			}
+		}
+	}
 }
 
 public Action Command_Place(int Client, int ArgC) {
@@ -496,10 +554,14 @@ public bool GetAimDestination(int client, float destination[3]){
 	return false;
 }
 
-public void PerformTeleportToAim(int client) {
+public void TeleportClientToAim(int client) {
+	PerformTeleportToAim(client, client);
+}
+
+public void PerformTeleportToAim(int aimer, int target) {
 	float dst[3];
-	if(GetAimDestination(client, dst)){
-		TeleportEntity(client, dst, NULL_VECTOR, NULL_VECTOR);
+	if(GetAimDestination(aimer, dst)){
+		TeleportEntity(target, dst, NULL_VECTOR, NULL_VECTOR);
 	}
 	
 }
